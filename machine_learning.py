@@ -61,13 +61,13 @@ all_df.shape
 
 pca = decomposition.PCA()
 pca.fit(all_df)
-print(pca.explained_variance_)
+print(pca.explained_variance_ratio_)
 sorted = np.sort(pca.explained_variance_ratio_)
 sorted.size
 plt.plot(np.linspace(0,sorted.size, sorted.size), pca.explained_variance_ratio_)
 plt.plot(np.arange(pca.explained_variance_ratio_.shape[0]), pca.explained_variance_)
 # As we can see, only the 2 first components are useful
-pca.n_components = 10
+pca.n_components = 2
 X_reduced = pca.fit_transform(all_df)
 x = pd.DataFrame(X_reduced)
 x.shape
@@ -96,16 +96,9 @@ print(k_means.labels_)
 
 k_means.labels_.tolist()
 
-unit = 0
-all_df[0]
-plt.scatter()
-plt.scatter(X_1[:][0], X_1[:][1], c=k_means.labels_, cmap=plt.get_cmap('viridis'))
+x.shape
 
-all_df
-all_df.shape
-compounds.shape
 
-a = all_df.reset_index(drop=True)
 # classifier
 a.shape
 #concat X and Y

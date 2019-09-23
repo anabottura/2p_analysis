@@ -8,7 +8,7 @@ import numpy as np
 from my_utils import *
 from plotting import *
 
-mouse_id = "CTBD7.1d"
+mouse_id = "CTBD11.1i"
 output = '/Users/anabottura/Documents/2p_analysis/data/'
 filename = output+'%s_exp_data.pickle'%mouse_id
 infofile = output+'exp_info.csv'
@@ -17,7 +17,7 @@ save_path = '/Users/anabottura/Documents/2p_analysis/data/figures/%s/Correlation
 
 exp_data, info_df, rois = read_data(mouse_id, filename, infofile, rois_file)
 
-code = 'AX'
+code = 'B'
 corr_all, fig_all = get_corr_plots(exp_data, code, name= 'of all cells')
 corr_resp, fig_resp = get_corr_plots(exp_data, code,name= 'of responsive cells', cells = exp_data.resp_cells)
 

@@ -15,6 +15,15 @@ from my_utils import *
 from pynalysis import utils
 import pickle
 
+mouse_id = "CTBD7.1d"
+output = '/Users/anabottura/Documents/2p_analysis/data/'
+filename = output+'%s_exp_data.pickle'%mouse_id
+infofile = output+'exp_info.csv'
+rois_file = output+'/imaging/processed/%s/rois_mapping/consitent_rois_plane1.csv'%mouse_id
+save_path = '/Users/anabottura/Documents/2p_analysis/data/figures/%s/Correlations/'%mouse_id
+
+exp_data, info_df, rois = read_data(mouse_id, filename, infofile, rois_file)
+
 # # Import local tools
 # sys.path.append(os.path.expanduser('/Users/anabottura/github/pynalysis/'))
 #

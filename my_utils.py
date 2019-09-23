@@ -138,7 +138,7 @@ def save_figs(fig_list, mouse_id, date, session, save_path):
         spath=((save_path+'%s/')%name)
         if not os.path.exists(spath):
             os.makedirs(spath)
-        f.savefig(spath+'%s_%s_Session%s_%s.png'%(mouse_id, date.replace('/','_'), session, name), dpi=300)
+        f.savefig(spath+'%s_%s_Session%s_%s.pdf'%(mouse_id, date.replace('/','_'), session, name), dpi=300)
         f.clf()
 
 def find_run(window, mouse_id, date, session, filepath, threshold=40):
@@ -178,44 +178,36 @@ def ttest_responsive(exp_data, rois, date):
     pre_trialCells = [trials[:,:int(stim),:], run_trials[:,:int(stim),:], trials_tracked[:,:int(stim),:], run_trials_tracked[:,:int(stim),:]]
     post_trialCells = [trials[:,int(stim):,:], run_trials[:,int(stim):,:], trials_tracked[:,int(stim):,:], run_trials_tracked[:,int(stim):,:]]
     # average over frames
+    ttest_array = []
     for i, array in enumerate(pre_trialCells):
         pre_trialCells[i] = np.mean(array, axis=1)
     for i, array in enumerate(post_trialCells):
         post_trialCells[i] = np.mean(array, axis=1)
     # do paired samples t-test on trials
-    ttest_array = []
     for i, array in enumerate(pre_trialCells):
         ttest = stats.ttest_rel(pre_trialCells[i], post_trialCells[i])
         ttest_array.append(ttest)
     #find 'responsive cells'
     resp_cells = []
     for i, array in enumerate(ttest_array):
-        res = array.pvalue < 0.05
-        resp_cells.append(res)
+        if np.all(np.isnan(array)):
+            resp_cells.append([])
+        else:
+            res = array.pvalue < 0.05
+            resp_cells.append(res)
     percent_response = []
     for i, array in enumerate(resp_cells):
-        pr = np.count_nonzero(array)/array.shape[0]
-        percent_response.append(pr)
+        if array == []:
+            percent_response.append(0)
+        else:
+            pr = np.count_nonzero(array)/array.shape[0]
+            percent_response.append(pr)
 
     ttest_array = pd.DataFrame([[ttest_array[0],ttest_array[1]],[ttest_array[2],ttest_array[3]]], index=['AllCells','Tracked'], columns=['AllTrials', 'Running'])
     resp_cells = pd.DataFrame([[resp_cells[0],resp_cells[1]],[resp_cells[2],resp_cells[3]]], index=['AllCells','Tracked'], columns=['AllTrials', 'Running'])
     percent_response = pd.DataFrame([[percent_response[0],percent_response[1]],[percent_response[2],percent_response[3]]], index=['AllCells','Tracked'], columns=['AllTrials', 'Running'])
 
     return ttest_array, resp_cells, percent_response
-
-def plot_response(exp_data, unit, date, ax):
-    '''
-    Function that takes compound, date, unit
-    and plots the trials in dF/F x time in axis ax
-    '''
-    data = exp_data.loc[date]
-    trials = data.trialArray[:,:,unit]
-    avg = np.mean(trials, axis=0)
-
-    x = np.ones(trials.shape)*(np.linspace(0,trials.shape[1]-1,trials.shape[1]))
-    ax.plot(x,trials, '-', color='0.90')
-    ax.plot(x[0], avg,'b-')
-    ax.axvline(x=exp_data.stimulus.loc[date], color='r')
 
 def read_data(mouse_id, pickle_file, infofile, rois_file):
     # Load exp. data file
@@ -243,6 +235,7 @@ def find_rdm_int(trials, size, start=0, stop=''):
     n_start = np.random.randint(start, end_w)
     trial_slice = trials[:,n_start:n_start+size,:]
     return trial_slice
+
 
 #need to create a function with this... not sure if it is somethin necessary
 #plot peri stim activity for responsive cells, tracked

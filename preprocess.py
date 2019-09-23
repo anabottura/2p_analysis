@@ -1,3 +1,7 @@
+%load_ext autoreload
+%autoreload 2
+%matplotlib inline
+
 # preprocess.py
 # Preprocessing of imaging data structure from hfapc task
 # Splits the data into trials
@@ -15,6 +19,7 @@ import pandas as pd
 from my_utils import *
 from pynalysis import utils
 import pickle
+from plotting import *
 # Import local tools
 sys.path.append(os.path.expanduser('/Users/anabottura/github/pynalysis/'))
 
@@ -24,8 +29,8 @@ output = '/Users/anabottura/Documents/2p_analysis/data/'
 infofile = output+'exp_info.csv'
 filepath = '/Users/anabottura/Documents/2p_analysis/data/pipeline_output/imaging/'
 rois_file = '/Users/anabottura/Documents/2p_analysis/data/imaging/processed/%s/rois_mapping/consitent_rois_plane1.csv'%mouse_id
-save_path = '/Users/anabottura/Documents/2p_analysis/data/figures/%s/trackedROIs/running/'%mouse_id
-plot = 'False'
+save_path = '/Users/anabottura/Documents/2p_analysis/data/figures/%s/'%mouse_id
+plot = 'True'
 ################################################################################
 # Read the information about the experiment
 info_df = read_exp_info(infofile, mouse_id)
@@ -54,8 +59,8 @@ for i in range(info_df.shape[0]):
 
     data, trials, trials_windows, stim_start, licks= preprocess(mouse_id, date, session, filepath)
     run_trials, trial_speed = find_run(trials_windows, mouse_id, date, session, filepath)
-    a = trials[run_trials==1,:,:]
-    b = a[:,:,sess_rois]
+    running_trials = trials[run_trials==1,:,:]
+    run_tracked = running_trials[:,:,sess_rois]
 
     s = pd.Series({'Data': data,'trialArray': trials,
     'trial_limit': trials_windows, 'stimulus': stim_start, 'running_t': run_trials,
@@ -63,13 +68,22 @@ for i in range(info_df.shape[0]):
     df = df.append(s)
 
     if plot == 'True':
-        fig_list = plotData(data[:,sess_rois], b, stim_start)
+        fig_list = plot_trialframes(trials, stim_start)
         save_figs(fig_list, mouse_id, date, str(session_info.Session), save_path)
+
+        fig_list1 = plotData(data[:,sess_rois], run_tracked, stim_start)
+        print(fig_list1.items)
+        save_figs(fig_list1, mouse_id, date, str(session_info.Session), save_path+'trackedROIs/running/')
+
+        fig_list2 = plot_trialframes(trials[:,:,sess_rois], stim_start)
+        save_figs(fig_list2, mouse_id, date, str(session_info.Session), save_path+'trackedROIs/')
+
 
 df.index.name = 'Sessions'
 exp_data = pd.concat([exp_data, df], axis=1)
 
 #save exp_data as a picked file to output filepath
+
 filename = output+'%s_exp_data.pickle'%mouse_id
 with open(filename, 'wb') as f:
     pickle.dump(exp_data, f)

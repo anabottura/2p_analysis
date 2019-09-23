@@ -2,8 +2,9 @@ import pickle
 import pandas as pd
 import numpy as np
 from my_utils import *
+from plotting import *
 
-mouse_id = "CTBD7.1d"
+mouse_id = "CTBD11.1i"
 output = '/Users/anabottura/Documents/2p_analysis/data/'
 filename = output+'%s_exp_data.pickle'%mouse_id
 infofile = output+'exp_info.csv'
@@ -45,13 +46,38 @@ for date in b_window.index:
 
 start1 = random_ints.start_random
 start2 = random_ints.start_pre
-f, ttest_df, pvalues_df = plot_tracked(exp_data, rois, start1, start2, sample_size, np.mean)
-f, ttest_df, pvalues_df = plot_tracked(exp_data, rois, start1, start2, sample_size, np.median)
-f, ttest_df, pvalues_df = plot_tracked(exp_data, rois, start1, start2, sample_size, np.max)
+
 f, ttest_df, pvalues_df = plot_tracked(exp_data, rois, start1, start2, sample_size, np.trapz)
 
 spath = output+'/figures/%s/'%mouse_id
 name = 'rdm_pre_area'
+if not os.path.exists(spath):
+    os.makedirs(spath)
+f.savefig(spath+'%s_%s.pdf'%(mouse_id, name), dpi=300)
+f.clf()
+
+f, ttest_df, pvalues_df = plot_tracked(exp_data, rois, start1, start2, sample_size, np.mean)
+
+spath = output+'/figures/%s/'%mouse_id
+name = 'rdm_pre_mean'
+if not os.path.exists(spath):
+    os.makedirs(spath)
+f.savefig(spath+'%s_%s.pdf'%(mouse_id, name), dpi=300)
+f.clf()
+
+f, ttest_df, pvalues_df = plot_tracked(exp_data, rois, start1, start2, sample_size, np.median)
+
+spath = output+'/figures/%s/'%mouse_id
+name = 'rdm_pre_median'
+if not os.path.exists(spath):
+    os.makedirs(spath)
+f.savefig(spath+'%s_%s.pdf'%(mouse_id, name), dpi=300)
+f.clf()
+
+f, ttest_df, pvalues_df = plot_tracked(exp_data, rois, start1, start2, sample_size, np.max)
+
+spath = output+'/figures/%s/'%mouse_id
+name = 'rdm_pre_max'
 if not os.path.exists(spath):
     os.makedirs(spath)
 f.savefig(spath+'%s_%s.pdf'%(mouse_id, name), dpi=300)

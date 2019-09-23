@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from matplotlib import cm
 import numpy as np
 import seaborn as sns
 import scipy.io
@@ -6,6 +7,14 @@ from scipy import stats
 import os, sys
 import tqdm
 import pandas as pd
+
+def find_divisors(n):
+    factors=[]
+    for i in range(1,n+1):
+        if n%i==0:
+           factors.append(i)
+    k = int(len(factors)/2)
+    return n/factors[k], factors[k]
 
 def plot_raw(data):
     trace = data
@@ -21,9 +30,12 @@ def plot_raw(data):
 
 def plot_trialframes(trialArray, stim_start):
     nb_units = trialArray.shape[2]
+    my_min = np.min(trialArray.mean(1))
+    my_max = np.max(trialArray.mean(1))
     # plot units x trials, averaging frames
     fig2 = plt.figure(2)
-    ax2 = plt.imshow(trialArray.mean(1).T, aspect="auto")
+    ax2 = plt.imshow(trialArray.mean(1).T, aspect="auto", norm = cm.colors.Normalize(my_min, my_max))
+    fig2.colorbar(ax2)
     plt.xlabel("trials")
     plt.ylabel("units")
     plt.title('Average activity per trial')
@@ -33,21 +45,37 @@ def plot_trialframes(trialArray, stim_start):
     x = stim_start*np.ones(nb_units)
     y = np.linspace(0,nb_units,nb_units)
     plt.plot(x, y, '-r', label = 'stimulus')
-    ax3 = plt.imshow(trialArray.mean(0).T, aspect="auto")
+    my_min = -0.2
+    my_max = 1.8
+    ax3 = plt.imshow(trialArray.mean(0).T, aspect="auto", norm = cm.colors.Normalize(my_min, my_max))
+    fig3.colorbar(ax3)
     plt.legend(loc='lower right')
     plt.xlabel("frames")
     plt.ylabel("units")
     plt.title('Average Trial Activity')
+    dic = {'uxt':fig2, 'uxf':fig3}
+    return dic
 
-    return fig2, fig3
+def plot_response(exp_data, unit, date, ax):
+    '''
+    Function that takes compound, date, unit
+    and plots the trials in dF/F x time in axis ax
+    '''
+    data = exp_data.loc[date]
+    trials = data.trialArray[:,:,unit]
+    avg = np.mean(trials, axis=0)
+
+    x = np.ones(trials.shape)*(np.linspace(0,trials.shape[1]-1,trials.shape[1]))
+    ax.plot(x,trials, '-', color='0.90')
+    ax.plot(x[0], avg,'b-')
+    ax.axvline(x=exp_data.stimulus.loc[date], color='r')
 
 def plotData(data, trialArray, stim_start):
 
     fig = plot_raw(data)
-    fig2, fig3 = plot_trialframes(trialArray, stim_start)
-
-    fig = {'RawData':fig, 'uxt':fig2, 'uxf':fig3}
-    return fig
+    dic = plot_trialframes(trialArray, stim_start)
+    dic['RawData']=fig
+    return dic
 
 def plot_resp_cells(code, exp_data):
     compounds = exp_data.loc[:,'Compound Code']
@@ -66,12 +94,17 @@ def plot_resp_cells(code, exp_data):
             plt.title(i+'_'+k)
             plt.xlabel('Sessions')
             plt.ylabel('Responsive Cells (%)')
-            plt.bar(x, height=(100*trials_cells))
+            if type(trials_cells) == np.float:
+                h = 100*trials_cells
+            else:
+                h = [100*i for i in trials_cells]
+            plt.bar(x, height=h)
             fig_list[code+'_'+i+k]= fig
     return fig_list
 
 def plot_tracked(exp_data, rois, start1, start2, sample_size, function):
-    fig = plt.figure(1, figsize=(22, 28))
+    a, b = find_divisors(rois.shape[0])
+    fig = plt.figure(1, figsize=(8*a, 4*b))
     ttest_df = pd.DataFrame(index=exp_data.index, columns=range(rois.shape[0]))
     pvalues_df = pd.DataFrame(index=exp_data.index, columns=range(rois.shape[0]))
     for u in range(rois.shape[0]):
@@ -95,7 +128,7 @@ def plot_tracked(exp_data, rois, start1, start2, sample_size, function):
 
         df_plot = pd.concat([df_rn,df_pre], axis=1)
 
-        plt.subplot(5,4,u+1)
+        plt.subplot(a,b,u+1)
         x = sample_size*np.ones(df_plot.shape[0]+1)
         y = np.linspace(0,df_plot.shape[0]+1,df_plot.shape[0]+1)
         plt.plot(x, y, '-r', linewidth=1)
@@ -115,7 +148,7 @@ def plot_tracked(exp_data, rois, start1, start2, sample_size, function):
 
     return fig, ttest_df, pvalues_df
 
-def plot_tracked_unit(unit, exp_data, info_df):
+def plot_tracked_unit(unit, exp_data, info_df, rois):
     gb = info_df.groupby('Date')
     order = ['B', 'Y', 'A', 'X']
     grouped = exp_data.groupby('Compound Code')
